@@ -1,0 +1,467 @@
+<html>
+
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+  <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+  <style>
+    * {
+      background-color: #F4F4FB;
+    }
+
+    body {
+      font: 13px Helvetica, Arial;
+      overflow: hidden;
+    }
+    #wrap { 
+      display:table;
+      width: 100%; 
+      height: 100%;
+    }
+    #cell { display:table-cell; vertical-align:middle; }
+    #welcome {
+      text-align: center;
+      color: #707070;
+      padding: 50px 20px;
+    }
+
+    #welcome input {
+      background: white;
+      width: 80%;
+      border-radius: 10px;
+      padding: 20px 15px;
+      outline: 0; 
+      margin: 20px 0px 60px;
+      text-align: center;
+      font-size: 25px;
+    }
+    #welcome button {
+      width: 200px;
+      background: #D8DAF3;
+      color: white;
+      border-radius: 20px; 
+      font-size: 20px;
+      box-shadow: #C8CBF5 0px 5px 15px;
+      cursor: pointer;
+      outline: 0;
+      margin-top: 100px;
+      transition: all .3s;
+    }
+    #welcome button:disabled {
+      background: #c0c1ce;
+      box-shadow: #d2d2de 0px 5px 15px;
+      transition: all .3s;
+    }
+    input {
+      border: 0;
+      padding: 10px;
+      width: 90%;
+      margin-right: .5%;
+    }
+
+    button {
+      width: 9%;
+      background: rgb(130, 224, 255);
+      border: none;
+      padding: 10px;
+    }
+
+    #m {
+      border-radius: 10px;
+      box-shadow: rgba(0, 0, 0, 0.07) 0px 3px 4px;
+      background: white;
+      outline: 0;
+      padding: 10px;
+      height: 50px;
+      width: 100%;
+      font-size: 15px;
+    }
+
+    #m::placeholder {
+      color: rgba(112, 112, 112, 1);
+      font-size: 15px;
+    }
+
+    #messages {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      height: 82%;
+      overflow-y: scroll;
+      padding-right: 20px;
+    }
+    #messages li {
+      margin-top: 10px;
+      min-height: 40px;
+      display: flow-root;
+    }
+
+    #messages li .bubble {
+      padding: 10px 20px;
+      background: #EAE8ED;
+      border-radius: 20px;
+      margin-left: 20px;
+      vertical-align: middle;
+      max-width: 75%;
+      display: inline-block;
+    }
+
+    #messages li.from_me .bubble {
+      background: #448CE8;
+      margin-left: 0px;
+      float: right;
+      color: white;
+      margin-bottom: 12px;
+    }
+
+    #messages li .bubble span {
+      background: none;
+    }
+
+    .message_time {
+      display: block;
+      color: #707070;
+    }
+
+    .user_list {
+      width: 30%;
+      list-style: none;
+      display: inline-block;
+      padding: 20px;
+      height: 100vh;
+    }
+
+    .chat_section {
+      width: 65%;
+      height: 100vh;
+      position: relative;
+      display: inline-block;
+      float: right;
+    }
+
+    .send_message_btn {
+      background: rgba(68, 140, 232, 1);
+      border-radius: 50%;
+      color: white;
+      cursor: pointer;
+      width: 30px;
+      height: 30px;
+      outline: 0;
+      position: relative;
+      display: inline-block;
+      vertical-align: middle;
+      box-shadow: rgba(68, 140, 232, .3) 0px 8px 16px;
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      transition: all .2s;
+    }
+    .send_message_btn:disabled {
+      background: #9e9e9e;
+      box-shadow: none;
+      transition: all .2s;
+    }
+    .send_message_btn img {
+      width: 15px;
+      height: 18px;
+      margin-top: -5px;
+      margin-left: -3px;
+      background: none;
+    }
+    .message_textbox {
+      position: absolute;
+      bottom: 25px;
+      width: 100%;
+    }
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      color: #ffffff;
+      font-size: 20px;
+      display: inline-block;
+      text-align: center;
+      vertical-align: middle;
+      line-height: 2;
+      -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+    }
+
+    /* Customize the label (the container) */
+.container {
+  display: inline-block;
+  position: relative;
+  padding-left: 35px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  padding: 0 50px;
+}
+
+/* Hide the browser's default radio button */
+.container input {
+  position: absolute;
+  opacity: 0;
+}
+
+/* Create a custom radio button */
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 25px;
+  width: 25px;
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 3px 4px;
+}
+
+/* On mouse-over, add a grey background color */
+.container:hover input ~ .checkmark {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* When the radio button is checked, add a blue background */
+.container input:checked ~ .checkmark {
+  background-color: white;
+}
+
+/* Create the indicator (the dot/circle - hidden when not checked) */
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+/* Show the indicator (dot/circle) when checked */
+.container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+/* Style the indicator (dot/circle) */
+.container .checkmark:after {
+  top: 5px;
+  left: 5px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #ADADAD;
+}
+.online_list {
+margin:  0 auto;
+padding: 0;
+overflow: scroll;
+    height: 100%;
+}
+
+.online_list .user_card {
+margin-bottom: 15px;
+list-style: none;
+}
+
+.user_card {
+    background: white;
+    border-radius: 10px;
+    width: 60%;
+    padding: 20px 20px;
+    padding-left: 30px;
+    font-size: 16px;
+    margin: 0 auto;
+}
+
+  .con{position:relative;height:1.875rem;line-height: 1.875rem;margin:20px auto;text-align: center;}
+  .con i{display:block;height:1px;background:#707070;position:absolute;top:0.9rem;width:80%;left: 10%;right: 10%;}
+  .con p{
+      display:inline-block;
+      font-size: 0.75rem;
+      color:#707070;
+      background:#F4F4FB;
+      padding:0 1.875rem;
+      text-align: center;
+      margin:0 auto;
+      position:relative;
+      z-index:2;}
+.active_dot {
+  background: rgb(66, 183, 42);
+    border-radius: 50%;
+    display: inline-block;
+    height: 12px;
+    width: 12px;
+    float: right;
+    position: relative;
+    margin-top: 12px;
+}
+.typing_user {
+  color: #707070;
+  position: absolute;
+    top: -40px;
+    left: 15px;
+}
+  </style>
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap" v-if="page === 1">
+      <div id="cell">
+        <div id="welcome">
+
+          請輸入姓名<br>
+          <input type="text" v-model="name" /><br>
+          <div>
+            <label class="container">男生
+              <input type="radio" name="gender" value="男生" checked="checked" v-model="gender">
+              <span class="checkmark"></span>
+            </label>
+
+            <label class="container">女生
+              <input type="radio" name="gender" value="女生" v-model="gender">
+              <span class="checkmark"></span>
+            </label>
+
+            <label class="container">不公開
+              <input type="radio" name="gender" value="不公開" v-model="gender">
+              <span class="checkmark"></span>
+            </label>
+          </div>
+          <button v-bind:disabled="name === '' || gender === ''" @click="start_chat">進入聊天</button>
+
+        </div>
+      </div>
+    </div>
+    <div id="page2" v-if="page === 2">
+      <div class="user_list">
+        <li class="user_card">
+          <div class="avatar" v-bind:style="{background: define_color(gender)}" style="margin-right: 10px;">{{
+            name.charAt(0) }}</div>
+          {{ name }}
+        </li>
+        <div class="con">
+          <i></i>
+          <p>上線列表</p>
+        </div>
+        <ul class="online_list">
+          <li class="user_card" v-for="(item, index) in user" v-if="item.username!=name">
+            <div class="avatar" v-bind:style="{background: define_color(item.gender)}" style="margin-right: 10px;">{{
+              item.username.charAt(0) }}</div>
+            {{ item.username }}
+            <span class="active_dot" ria-label="Active Now"></span>
+          </li>
+        </ul>
+      </div>
+      <div class="chat_section">
+        <ul id="messages"></ul>
+        <div class="message_textbox">
+          <p class="typing_user" v-if="typing_user.length"><span>{{ typing_user.toString() }}</span> 正在輸入訊息...</p>
+          <input id="m" autocomplete="off" placeholder="請輸入訊息..." v-model="m" v-on:keyup.13="send_message_by_enter"
+            v-on:keyup="typing" />
+          <button class="send_message_btn" v-on:click="send_message" v-bind:disabled="m === ''"><img src="./send.png"></button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</body>
+<script>
+  var vm = new Vue({
+    el: '#container',
+    data: {
+      page: 1,
+      name: '',
+      m: '',
+      gender: '',
+      socket: io(),
+      user: {},
+      typing_user: []
+    },
+    methods: {
+      send_message: function () {
+        this.socket.emit('client_message', { name: this.name, gender: this.gender, message: this.m, time: moment(new Date()).format("YYYY-MM-DD HH:mm:ss") });
+        this.m = '';
+        document.getElementById("m").focus();
+      },
+      send_message_by_enter: function () {
+        if (this.m) {
+          this.socket.emit('client_message', { name: this.name, gender: this.gender, message: this.m, time: moment(new Date()).format("YYYY-MM-DD HH:mm:ss") });
+          this.m = '';
+        }
+      },
+      typing: function () {
+        var socket = io();
+        var self = this;
+        socket.on('connect', function () {
+          socket.emit('typing', self.name, self.m);
+        });
+      },
+      generate_avatar: function (data) {
+        var first_character = data.name.charAt(0);
+        var avatar_color = this.define_color(data.gender);
+        var avatar_result = '<div class="avatar" style="background:' + avatar_color + '">' + first_character + '</div>'
+        return avatar_result;
+      },
+      define_color: function (gender) {
+        var avatar_color = '';
+        switch (gender) {
+          case '男生':
+            avatar_color = "#9EB6DD";
+            break;
+          case '女生':
+            avatar_color = "#D698AB";
+            break;
+          default:
+            avatar_color = "#dddddd";
+            break;
+        }
+        return avatar_color;
+      },
+      start_chat: function () {
+        var socket = io();
+        this.page = 2;
+        var self = this;
+        socket.on('connect', function () {
+          socket.emit('new user', self.name, self.gender);
+        });
+        $('#m').focus();
+      }
+    },
+    mounted() {
+      var socket = io();
+      var self = this;
+      socket.on('message', function (data) {
+        var msg_name = data.name;
+        var msg_content = data.message;
+        var msg_time = moment(data.time).format("HH:mm")
+        var msg_avatar = self.generate_avatar(data);
+        if (msg_name != self.name) {
+          $('#messages').append('<li>' + msg_avatar + '<div class="bubble"><span>' + msg_content + '</span></div><span class="message_time">' + msg_time + '</span></li>');
+          $("#messages").animate({ scrollTop: $("#messages").height() }, 100);
+        }
+        else {
+          $('#messages').append('<li class="from_me"><div class="bubble"><span>' + msg_content + '</span></div></li>');
+          $("#messages").animate({ scrollTop: $("#messages").height() }, 100);
+        }
+      });
+      socket.on('save_user_to_vue', function (user) {
+        self.user = user;
+      })
+      socket.on('save_typing_user_to_vue', function (user) {
+        if (user.includes(self.name)) {
+          user.splice(user.indexOf(self.name), 1);
+        }
+        self.typing_user = user;
+      })
+    }
+  })
+</script>
+
+</html>
