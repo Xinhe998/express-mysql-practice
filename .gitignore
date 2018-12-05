@@ -1,3 +1,5 @@
 # dotenv environment variables file
 .env
 .vscode
+*.log
+node_modules/
