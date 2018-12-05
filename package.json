@@ -1,5 +1,5 @@
 {
-  "name": "nodejs-api-practice",
+  "name": "express-mysql-practice",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -23,8 +23,8 @@
     "socket.io-client": "^2.1.1"
   },
   "apidoc": {
-    "name": "nodejs-api-practice",
-    "title": "nodejs-api-practice",
+    "name": "express-mysql-practice",
+    "title": "express-mysql-practice",
     "version": "0.1.0",
     "description": "apiDoc 練習",
     "url": "http://localhost:3000/api",
